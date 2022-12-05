@@ -1,11 +1,7 @@
 import * as dotenv from "dotenv";
 
-let result;
-if (process.env.NODE_ENV === "production") {
-  result = dotenv.config({ path: "/usr/src/app/env-config/env" });
-} else {
-  result = dotenv.config();
-}
+let result = dotenv.config();
+
 if (result.error) {
   throw result.error;
 }
