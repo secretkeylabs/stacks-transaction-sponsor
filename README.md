@@ -4,7 +4,7 @@ This is a web service that functions as a open sponsor for Stacks transactions. 
 
 POST to the `/v1/sponsor` endpoint with the user signed transaction in the JSON body. The transaction must be created as a sponsored transaction. The service will sign the transaction as the sponsor and broadcast it.
 
-The service will use multiple addresses from the same wallet at random to sponsor transactions. You can set the number of addresses to use in the `.env` file. Each addresses must be funded with STX. This allows the sponsor to handle more simultaneous pending transactions.
+The service will use multiple addresses from the same wallet at random to sponsor transactions. This allows the sponsor to handle more simultaneous pending transactions. You can set the number of addresses to use in the `.env` file. Each address must be funded with STX. 
 
 `/v1/info` will return the list of addresses used by the service for sponsoring transactions
 
@@ -22,7 +22,9 @@ npm install
 ```
 Create an `.env` file in the project root using the included `.env.example` file as a guide.
 
-Configure the .env file with your wallet seed phrase. 
+Configure the `.env` file with your wallet seed phrase. 
+
+Fund all addresses that you will be using with STX.
 
 
 ## Running
