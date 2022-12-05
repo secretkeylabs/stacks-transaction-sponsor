@@ -24,6 +24,11 @@ initializeSponsorWallet();
 
 app.use(json());
 app.use(cors());
+
+app.get('/', (req, res) => {
+  res.send('Ok')
+});
+
 app.use("/v1", v1);
 app.use(errorHandler);
 app.use(wrongRouteHandler);
