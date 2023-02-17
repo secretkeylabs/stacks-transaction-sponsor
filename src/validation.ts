@@ -33,9 +33,9 @@ export async function validateTransaction(transaction: StacksTransaction) {
   }
 
   // check against sip-09 interface for transfer
-  if (func.args[0].name !== 'id' || func.args[0].type !== 'uint128'
-    || func.args[1].name !== 'sender' || func.args[1].type !== 'principal'
-    || func.args[2].name !== 'recipient' || func.args[2].type !== 'principal') {
+  if (func.args[0].type !== 'uint128'
+    || func.args[1].type !== 'principal'
+    || func.args[2].type !== 'principal') {
     throw new Error('Transaction is not a NFT transfer contract call');
   }
 
