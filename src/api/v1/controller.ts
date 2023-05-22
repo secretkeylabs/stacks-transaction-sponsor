@@ -61,39 +61,42 @@ export class Controller {
       // attempt to lock a random sponsor account from wallet
       const account = await lockRandomSponsorAccount();
 
-      // get the sponsor address nonce
-      const network = new StacksMainnet();
-      const nonce = getAccountNonce(account);
+      try {
+        const network = new StacksMainnet();
 
-      // sign transaction as sponsor
-      const signedTx = await sponsorTransaction({
-        transaction: tx,
-        sponsorPrivateKey: account.stxPrivateKey,
-        network,
-        sponsorNonce: nonce
-      });
+        // get the sponsor address nonce
+        const nonce = getAccountNonce(account);
 
-      // make sure fee doesn't exceed maximum
-      const auth = signedTx.auth as SponsoredAuthorization;
-      const fee = auth.sponsorSpendingCondition.fee;
-      const maxFee = BigInt(envVariables.maxFee);
-      if (fee > maxFee) {
-        throw new Error(`Transaction fee (${fee}) exceeds max sponsor fee (${maxFee})`);
-      }
-      
-      // broadcast transaction
-      const result = await broadcastTransaction(signedTx, network);
+        // sign transaction as sponsor
+        const signedTx = await sponsorTransaction({
+          transaction: tx,
+          sponsorPrivateKey: account.stxPrivateKey,
+          network,
+          sponsorNonce: nonce
+        });
 
-      // increment nonce, release sponsor account and handle errors
-      if ('error' in result) {
+        // make sure fee doesn't exceed maximum
+        const auth = signedTx.auth as SponsoredAuthorization;
+        const fee = auth.sponsorSpendingCondition.fee;
+        const maxFee = BigInt(envVariables.maxFee);
+        if (fee > maxFee) {
+          throw new Error(`Transaction fee (${fee}) exceeds max sponsor fee (${maxFee})`);
+        }
+
+        // broadcast transaction
+        const result = await broadcastTransaction(signedTx, network);
+
+        // increment nonce or handle errors
+        if ('error' in result) {
+          throw new Error(`Broadcast failed: ${result.error}`);
+        } else {
+          incrementAccountNonce(account);
+        }
+
+        return res.json({txid: result.txid, rawTx: bytesToHex(signedTx.serialize())});
+      } finally {
         unlockSponsorAccount(account);
-        throw new Error(`Broadcast failed: ${result.error}`);
-      } else {
-        incrementAccountNonce(account);
-        unlockSponsorAccount(account);
       }
-
-      return res.json({txid: result.txid, rawTx: bytesToHex(signedTx.serialize())});
     } catch (error) {
       next(error);
     }
