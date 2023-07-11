@@ -10,8 +10,8 @@ export async function validateTransaction(transaction: StacksTransaction): Promi
   const payload = transaction.payload as ContractCallPayload;
 
   // check and limit to SIP-09 transfers calls
-  if (payload.functionName.content.toString() !== 'transfer') {
-    throw new Error('Transaction is not a NFT transfer contract call');
+  if (payload.contractAddress.hash160.toString() !== 'e685b016b3b6cd9ebf35f38e5ae29392e2acd51d') {
+    throw new Error('Transaction is not an ALEX swap contract call');
   }
 
   const contractAddress = addressToString(payload.contractAddress);
