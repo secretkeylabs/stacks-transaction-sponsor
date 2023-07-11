@@ -18,8 +18,8 @@ export async function validateTransaction(transaction: StacksTransaction) {
   const contractName = payload.contractName.content.toString();
   const functionName = payload.functionName.content.toString();
   const abi = await getAbi(contractAddress, contractName, 'mainnet');
-  const func = abi.functions.find((func) => {
-    return func.name === functionName;
+  const func = abi.functions.find((fn) => {
+    return fn.name === functionName;
   });
 
   if (func.args.length !== 3) {
