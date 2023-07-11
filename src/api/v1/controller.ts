@@ -1,29 +1,23 @@
-import { NextFunction, Request, Response } from "express";
-import { 
+import { NextFunction, Request, Response } from 'express';
+import {
   deserializeTransaction,
   sponsorTransaction,
   broadcastTransaction,
-  SponsoredAuthorization
-} from "@stacks/transactions";
-import { bytesToHex } from "@stacks/common";
+  SponsoredAuthorization,
+} from '@stacks/transactions';
+import { bytesToHex } from '@stacks/common';
 import { StacksMainnet } from '@stacks/network';
 import envVariables from '../../../config/config';
-import { 
-  SponsorAccountsKey,
- } from '../../constants'
-import { 
+import { SponsorAccountsKey } from '../../constants';
+import {
   lockRandomSponsorAccount,
   getAccountNonce,
   incrementAccountNonce,
   unlockSponsorAccount,
-  check
+  check,
 } from '../../nonce';
-import {
-  getAccountAddress
-} from '../../utils';
-import {
-  validateTransaction
-} from '../../validation';
+import { getAccountAddress } from '../../utils';
+import { validateTransaction } from '../../validation';
 
 let cache = require('../../cache');
 
@@ -32,14 +26,14 @@ export class Controller {
     try {
       const accounts = cache.instance().get(SponsorAccountsKey);
       const addresses = [];
-      accounts.forEach(account => {
+      accounts.forEach((account) => {
         const address = getAccountAddress(account);
         addresses.push(address);
       });
 
       return res.json({
-        active: true, 
-        sponsor_addresses: addresses
+        active: true,
+        sponsor_addresses: addresses,
       });
     } catch (error) {
       next(error);
@@ -56,7 +50,7 @@ export class Controller {
 
       if (!validTx) {
         throw new Error('Transaction not valid for sponsorship');
-      } 
+      }
 
       // attempt to lock a random sponsor account from wallet
       const account = await lockRandomSponsorAccount();
@@ -72,7 +66,7 @@ export class Controller {
           transaction: tx,
           sponsorPrivateKey: account.stxPrivateKey,
           network,
-          sponsorNonce: nonce
+          sponsorNonce: nonce,
         });
 
         // make sure fee doesn't exceed maximum
@@ -93,7 +87,7 @@ export class Controller {
           incrementAccountNonce(account);
         }
 
-        return res.json({txid: result.txid, rawTx: bytesToHex(signedTx.serialize())});
+        return res.json({ txid: result.txid, rawTx: bytesToHex(signedTx.serialize()) });
       } finally {
         unlockSponsorAccount(account);
       }

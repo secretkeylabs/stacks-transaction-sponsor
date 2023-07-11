@@ -1,8 +1,5 @@
 import { Account } from '@stacks/wallet-sdk';
-import { 
-  getAddressFromPrivateKey,
-  TransactionVersion
-} from "@stacks/transactions";
+import { getAddressFromPrivateKey, TransactionVersion } from '@stacks/transactions';
 
 export function getRandomInt(min, max) {
   min = Math.ceil(min);
@@ -16,9 +13,6 @@ export function sleep(ms) {
   });
 }
 
-export function getAccountAddress(
-  account: Account, 
-  version: TransactionVersion = TransactionVersion.Mainnet 
-): string {
+export function getAccountAddress(account: Account, version: TransactionVersion = TransactionVersion.Mainnet): string {
   return getAddressFromPrivateKey(account.stxPrivateKey, version);
 }
