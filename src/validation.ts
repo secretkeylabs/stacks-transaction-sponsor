@@ -2,7 +2,7 @@ import { PayloadType, ContractCallPayload, getAbi, addressToString, StacksTransa
 
 // rules for transaction sponsorship eligibility
 // customize this if you are forking this repo
-export async function validateTransaction(transaction: StacksTransaction) {
+export async function validateTransaction(transaction: StacksTransaction): Promise<boolean> {
   if (transaction.payload.payloadType !== PayloadType.ContractCall) {
     throw new Error('Transaction is not a contract call');
   }
