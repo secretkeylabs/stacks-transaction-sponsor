@@ -29,4 +29,5 @@ export default {
   maxFee: isEnvVarValid(
     process.env.MAX_FEE as string
   ),
+  logLevel: process.env.LOG_LEVEL || "info",
 };

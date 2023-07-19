@@ -7,10 +7,22 @@ export const errorHandler: ErrorRequestHandler = (err, req, res) => {
     message: err.message,
   });
 
+  req.logger.error({ err }, 'an error occurred');
+};
+
 export const wrongRouteHandler: RequestHandler = (req, res) => {
   const statusCode = 404;
+  const message = 'Route not found. Request failed with status code 404';
   res.status(statusCode).json({
     status: statusCode,
-    message: 'Route not found. Request failed with status code 404 ',
+    message,
   });
-}
+  req.logger.info({
+    message,
+    path: req.path,
+    params: req.params,
+    headers: req.headers,
+    body: req.body,
+    ip: req.ip,
+  });
+};

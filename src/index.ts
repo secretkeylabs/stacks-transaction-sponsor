@@ -24,6 +24,7 @@ initializeSponsorWallet();
 
 app.use(json());
 app.use(cors());
+app.use(requestLogMiddleware);
 
 app.get('/', (_: Request, res: Response) => {
   res.send('Ok');
@@ -34,7 +35,7 @@ app.use(errorHandler);
 app.use(wrongRouteHandler);
 
 const server = app.listen(port, () => {
-  console.log(
+  logger.info(
     `Stacks Transaction Sponsor Web Service started and listening at http://localhost:${port} in ${app.get(
       'env',
     )} mode`,
