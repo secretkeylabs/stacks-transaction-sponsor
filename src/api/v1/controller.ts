@@ -37,6 +37,9 @@ export class Controller {
   sponsor: RequestHandler = async (req, res, next) => {
     try {
       const rawTx = req.body.tx;
+      if (!rawTx) {
+        res.status(400).send('Invalid request');
+      }
       const tx = deserializeTransaction(rawTx);
 
       // check against rules to see if transaction is allowed for sponsorship
