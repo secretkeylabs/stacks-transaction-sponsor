@@ -26,6 +26,7 @@
     "node-cache": "^5.1.2"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.13",
     "@types/jest": "^29.5.3",
     "@types/node": "^12.12.6",
     "@typescript-eslint/eslint-plugin": "^5.58.0",

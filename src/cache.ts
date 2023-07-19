@@ -1,12 +1,17 @@
-let nodeCache = require('node-cache');
+import nodeCache from 'node-cache';
 let cache = null;
 
-exports.start = function (done) {
+export function start(done: (err?: unknown) => void) {
   if (cache) return done();
 
   cache = new nodeCache();
-};
+}
 
-exports.instance = function () {
+export function instance() {
   return cache;
+}
+
+export default {
+  start,
+  instance
 };

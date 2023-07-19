@@ -1,12 +1,8 @@
 import { SponsorAccountsKey, AddressNoncePrefix, AddressLockPrefix, MaxLockAttempts } from './constants';
-
 import { Account } from '@stacks/wallet-sdk';
-
 import envVariables from '../config/config';
-
 import { sleep, getRandomInt, getAccountAddress } from './utils';
-
-let cache = require('./cache');
+import cache from './cache';
 
 export function check(address: string): boolean {
   return cache.instance().get(AddressLockPrefix + address);
@@ -14,8 +10,8 @@ export function check(address: string): boolean {
 
 // lock address nonce
 export function lock(address: string): boolean {
-  const lock = check(address);
-  if (lock === true) {
+  const locked = check(address);
+  if (locked === true) {
     return false;
   } else {
     cache.instance().set(AddressLockPrefix + address, true);
@@ -38,8 +34,8 @@ export function getRandomSponsorAccount(): Account {
 // attempt to lock one of the available addresses
 // retry after 1000ms if locked by another request
 export async function lockRandomSponsorAccount(): Promise<Account> {
-  var locked = false;
-  var attempts = 0;
+  let locked = false;
+  let attempts = 0;
 
   while (!locked) {
     const account = getRandomSponsorAccount();

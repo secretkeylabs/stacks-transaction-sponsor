@@ -14,19 +14,18 @@ import {
   getAccountNonce,
   incrementAccountNonce,
   unlockSponsorAccount,
-  check,
 } from '../../nonce';
 import { getAccountAddress } from '../../utils';
 import { validateTransaction } from '../../validation';
-
-let cache = require('../../cache');
+import { Account } from '@stacks/wallet-sdk';
+import cache from '../../cache';
 
 export class Controller {
-  info = async (req: Request, res: Response, next: NextFunction) => {
+  info = async (_: Request, res: Response, next: NextFunction) => {
     try {
       const accounts = cache.instance().get(SponsorAccountsKey);
       const addresses = [];
-      accounts.forEach((account) => {
+      accounts.forEach((account: Account) => {
         const address = getAccountAddress(account);
         addresses.push(address);
       });
