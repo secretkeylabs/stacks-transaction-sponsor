@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+import { RequestHandler } from 'express';
 import {
   deserializeTransaction,
   sponsorTransaction,
@@ -9,19 +9,14 @@ import { bytesToHex } from '@stacks/common';
 import { StacksMainnet } from '@stacks/network';
 import envVariables from '../../../config/config';
 import { SponsorAccountsKey } from '../../constants';
-import {
-  lockRandomSponsorAccount,
-  getAccountNonce,
-  incrementAccountNonce,
-  unlockSponsorAccount,
-} from '../../nonce';
+import { lockRandomSponsorAccount, getAccountNonce, incrementAccountNonce, unlockSponsorAccount } from '../../nonce';
 import { getAccountAddress } from '../../utils';
 import { validateTransaction } from '../../validation';
 import { Account } from '@stacks/wallet-sdk';
 import cache from '../../cache';
 
 export class Controller {
-  info = async (_: Request, res: Response, next: NextFunction) => {
+  info: RequestHandler = async (_, res, next) => {
     try {
       const accounts = cache.instance().get(SponsorAccountsKey);
       const addresses = [];
@@ -39,7 +34,7 @@ export class Controller {
     }
   };
 
-  sponsor = async (req: Request, res: Response, next: NextFunction) => {
+  sponsor: RequestHandler = async (req, res, next) => {
     try {
       const rawTx = req.body.tx;
       const tx = deserializeTransaction(rawTx);
