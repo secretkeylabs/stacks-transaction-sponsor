@@ -31,8 +31,8 @@ app.get('/', (_: Request, res: Response) => {
 });
 
 app.use('/v1', v1);
-app.use(errorHandler);
 app.use(wrongRouteHandler);
+app.use(errorHandler);
 
 const server = app.listen(port, () => {
   logger.info(
