@@ -4,6 +4,7 @@ import {
   sponsorTransaction,
   broadcastTransaction,
   SponsoredAuthorization,
+  StacksTransaction,
 } from '@stacks/transactions';
 import { bytesToHex } from '@stacks/common';
 import { StacksMainnet } from '@stacks/network';
@@ -38,13 +39,19 @@ export class Controller {
     try {
       const rawTx = req.body.tx;
       if (!rawTx) {
-        res.status(400).send('Invalid request');
+        throw new Error('Invalid request. tx is required');
       }
-      const tx = deserializeTransaction(rawTx);
+
+      let tx: StacksTransaction;
+      try {
+        tx = deserializeTransaction(rawTx);
+      } catch (e) {
+        req.logger.error(e);
+        throw new Error('Failed to deserialize transaction');
+      }
 
       // check against rules to see if transaction is allowed for sponsorship
       const validTx = await validateTransaction(tx);
-
       if (!validTx) {
         throw new Error('Transaction not valid for sponsorship');
       }
