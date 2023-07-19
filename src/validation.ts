@@ -16,7 +16,11 @@ export async function validateTransaction(transaction: StacksTransaction): Promi
   const contractName = payload.contractName.content.toString();
   const functionName = payload.functionName.content.toString();
 
-  if (!getAlex().isAlexSwapTransaction(contractAddress, contractName, functionName)) {
+  try {
+    if (!getAlex().isAlexSwapTransaction(contractAddress, contractName, functionName)) {
+      throw new Error('Transaction is not an ALEX swap contract address');
+    }
+  } catch (e) {
     throw new Error('Transaction is not an ALEX swap contract address');
   }
 
