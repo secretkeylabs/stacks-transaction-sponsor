@@ -1,43 +1,44 @@
 import { json } from 'body-parser';
-import { errorHandler, wrongRouteHandler } from "./response";
+import { errorHandler, wrongRouteHandler } from './response';
 import { initializeSponsorWallet } from './initialization';
+import { Request, Response } from 'express';
+import cache from './cache';
+import express from 'express';
+import cors from 'cors';
+import v1 from './api/v1/router';
+import { logger, requestLogMiddleware } from './logger';
 
-let cache = require('./cache')
-
-const express = require("express");
-var cors = require('cors')
 const app = express();
 
-const v1 = require("./api/v1/router");
-
 let port = 8080;
-if (app.get("env") === "development") {
+if (app.get('env') === 'development') {
   port = 3100;
 }
 
-cache.start(function (err) {
-  if (err) console.error(err)
-})
+cache.start(function (err: unknown) {
+  if (err) logger.error(err);
+});
 
 // initialize the sponsor wallets to the correct nonce
 initializeSponsorWallet();
 
 app.use(json());
 app.use(cors());
+app.use(requestLogMiddleware);
 
-app.get('/', (req, res) => {
-  res.send('Ok')
+app.get('/', (_: Request, res: Response) => {
+  res.send('Ok');
 });
 
-app.use("/v1", v1);
-app.use(errorHandler);
+app.use('/v1', v1);
 app.use(wrongRouteHandler);
+app.use(errorHandler);
 
 const server = app.listen(port, () => {
-  console.log(
+  logger.info(
     `Stacks Transaction Sponsor Web Service started and listening at http://localhost:${port} in ${app.get(
-      "env"
-    )} mode`
+      'env',
+    )} mode`,
   );
 });
 

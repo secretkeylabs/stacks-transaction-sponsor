@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv";
 
-let result = dotenv.config();
+const result = dotenv.config();
 
 if (result.error) {
   throw result.error;
@@ -29,4 +29,5 @@ export default {
   maxFee: isEnvVarValid(
     process.env.MAX_FEE as string
   ),
+  logLevel: process.env.LOG_LEVEL || "info",
 };
