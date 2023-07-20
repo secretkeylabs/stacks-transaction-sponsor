@@ -88,7 +88,13 @@ export class Controller {
 
         // increment nonce or handle errors
         if ('error' in result) {
-          throw new Error(`Broadcast failed: ${result.error}`);
+          req.logger.warn({
+            tx,
+            network,
+            nonce,
+            result,
+          })
+          throw new Error(`Broadcast failed: ${result.error} ${result.reason}`);
         } else {
           incrementAccountNonce(account);
         }
