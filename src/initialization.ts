@@ -1,20 +1,10 @@
-import { StacksMainnet } from "@stacks/network";
-import { 
-  getAddressFromPrivateKey, 
-  TransactionVersion 
-} from "@stacks/transactions";
-import envVariables from "../config/config";
-import axios from "axios";
-import { 
-  generateWallet, 
-  generateNewAccount 
-} from "@stacks/wallet-sdk";
-import { 
-  SponsorAccountsKey,
-  AddressNoncePrefix
- } from './constants'
-
-let cache = require('./cache')
+import { StacksMainnet } from '@stacks/network';
+import { getAddressFromPrivateKey, TransactionVersion } from '@stacks/transactions';
+import envVariables from '../config/config';
+import axios from 'axios';
+import { generateWallet, generateNewAccount } from '@stacks/wallet-sdk';
+import { SponsorAccountsKey, AddressNoncePrefix } from './constants';
+import cache from './cache';
 
 export interface StxAddressDataResponse {
   balance: string;
@@ -23,31 +13,21 @@ export interface StxAddressDataResponse {
   nonce: number;
 }
 
-export async function initializeSponsorWallet() {    
-  const seed = envVariables.seed;
-  const password = envVariables.password;
-  const numAddresses = Number(envVariables.numAddresses);
+export async function getMempoolTransactions(stxAddress: string): Promise<number> {
+  const network = new StacksMainnet();
+  const apiUrl = `${network.coreApiUrl}/extended/v1/tx/mempool?address=${stxAddress}`;
 
-  // generate wallet from seed
-  const wallet = await generateWallet({
-    secretKey: seed,
-    password: password,
-  });
-
-  // derive specified number of accounts/addresses
-  for (let i = 0; i < numAddresses - 1; i++) {
-    const newAccounts = await generateNewAccount(wallet);    
-    wallet.accounts = newAccounts.accounts;
-  }
-
-  // cache sponsor accounts
-  const result = cache.instance().set(SponsorAccountsKey, wallet.accounts);
-  
-  // get the correct next nonce for each addresses
-  wallet.accounts.forEach(account => {
-    const address = getAddressFromPrivateKey(account.stxPrivateKey, TransactionVersion.Mainnet);
-    setupAccountNonce(address);
-  });  
+  return axios
+    .get(apiUrl, {
+      timeout: 30000,
+      params: {
+        limit: 0,
+        offset: 30,
+      },
+    })
+    .then((response) => {
+      return response.data.total;
+    });
 }
 
 export async function setupAccountNonce(address: string) {
@@ -68,24 +48,32 @@ export async function setupAccountNonce(address: string) {
   const nextNonce = nonce + pendingTransactionCount;
 
   // cache correct next nonce
-  const result = cache.instance().set(AddressNoncePrefix+address, nextNonce);
+  cache.instance().set(AddressNoncePrefix + address, nextNonce);
 }
 
-export async function getMempoolTransactions(
-  stxAddress: string
-): Promise<number> {
-  const network = new StacksMainnet();
-  let apiUrl = `${network.coreApiUrl}/extended/v1/tx/mempool?address=${stxAddress}`;
+export async function initializeSponsorWallet() {
+  const seed = envVariables.seed;
+  const password = envVariables.password;
+  const numAddresses = Number(envVariables.numAddresses);
 
-  return axios
-    .get(apiUrl, {
-      timeout: 30000,
-      params: {
-        limit: 0,
-        offset: 30,
-      },
-    })
-    .then((response) => {
-      return response.data.total;
-    });
+  // generate wallet from seed
+  const wallet = await generateWallet({
+    secretKey: seed,
+    password: password,
+  });
+
+  // derive specified number of accounts/addresses
+  for (let i = 0; i < numAddresses - 1; i++) {
+    const newAccounts = generateNewAccount(wallet);
+    wallet.accounts = newAccounts.accounts;
+  }
+
+  // cache sponsor accounts
+  cache.instance().set(SponsorAccountsKey, wallet.accounts);
+
+  // get the correct next nonce for each addresses
+  wallet.accounts.forEach((account) => {
+    const address = getAddressFromPrivateKey(account.stxPrivateKey, TransactionVersion.Mainnet);
+    setupAccountNonce(address);
+  });
 }
