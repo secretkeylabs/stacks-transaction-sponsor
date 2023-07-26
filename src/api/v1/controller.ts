@@ -100,7 +100,7 @@ export class Controller {
             tx,
             nonce,
             result,
-          });
+          }, 'failed to broadcast transaction');
           throw new Error(`Broadcast failed: ${result.error} ${result.reason}`);
         } else {
           incrementAccountNonce(account);
