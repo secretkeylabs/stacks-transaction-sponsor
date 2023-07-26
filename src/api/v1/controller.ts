@@ -5,8 +5,10 @@ import {
   broadcastTransaction,
   SponsoredAuthorization,
   StacksTransaction,
+  getAddressFromPrivateKey,
+  TxRejectedReason,
 } from '@stacks/transactions';
-import { bytesToHex } from '@stacks/common';
+import { bytesToHex, TransactionVersion } from '@stacks/common';
 import { StacksMainnet } from '@stacks/network';
 import envVariables from '../../../config/config';
 import { SponsorAccountsKey } from '../../constants';
@@ -15,6 +17,7 @@ import { getAccountAddress } from '../../utils';
 import { validateTransaction } from '../../validation';
 import { Account } from '@stacks/wallet-sdk';
 import cache from '../../cache';
+import { setupAccountNonce } from '../../initialization';
 
 export class Controller {
   info: RequestHandler = async (_, res, next) => {
@@ -82,11 +85,23 @@ export class Controller {
         }
 
         // broadcast transaction
-        const result = await broadcastTransaction(signedTx, network);
+        let result = await broadcastTransaction(signedTx, network);
+
+        if (result?.reason === TxRejectedReason.BadNonce) {
+          req.logger.warn({ tx, nonce, result }, 'Bad nonce. Will update cached nonce and try again');
+          const address = getAddressFromPrivateKey(account.stxPrivateKey, TransactionVersion.Mainnet);
+          await setupAccountNonce(address);
+          result = await broadcastTransaction(signedTx, network);
+        }
 
         // increment nonce or handle errors
         if ('error' in result) {
-          throw new Error(`Broadcast failed: ${result.error}`);
+          req.logger.warn({
+            tx,
+            nonce,
+            result,
+          }, 'failed to broadcast transaction');
+          throw new Error(`Broadcast failed: ${result.error} ${result.reason}`);
         } else {
           incrementAccountNonce(account);
         }
