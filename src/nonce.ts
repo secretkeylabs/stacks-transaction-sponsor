@@ -1,6 +1,8 @@
-import { SponsorAccountsKey, AddressNoncePrefix, AddressLockPrefix, MaxLockAttempts } from './constants';
+import { StacksMainnet } from '@stacks/network';
 import { Account } from '@stacks/wallet-sdk';
+import axios from 'axios';
 import envVariables from '../config/config';
+import { SponsorAccountsKey, AddressNoncePrefix, AddressLockPrefix, MaxLockAttempts } from './constants';
 import { sleep, getRandomInt, getAccountAddress } from './utils';
 import cache from './cache';
 
@@ -68,4 +70,29 @@ export function incrementAccountNonce(account: Account) {
   const address = getAccountAddress(account);
   const currentNonce = getAccountNonce(account);
   return cache.instance().set(AddressNoncePrefix + address, currentNonce + 1);
+}
+
+export interface StxNoncesDataResponse {
+  last_mempool_tx_nonce: number | null;
+  last_executed_tx_nonce: number | null;
+  possible_next_nonce: number;
+  detected_missing_nonces: number[];
+  detected_mempool_nonces?: number[];
+}
+
+export async function fetchAndCacheAccountNonce(address: string) {
+  const network = new StacksMainnet();
+  const apiUrl = `${network.coreApiUrl}/extended/v1/address/${address}/nonces`;
+
+  const response = await axios.get<StxNoncesDataResponse>(apiUrl, {
+    timeout: 30000,
+  });
+  const nextNonce = response.data.possible_next_nonce;
+
+  return cache.instance().set(AddressNoncePrefix + address, nextNonce);
+}
+
+export async function refetchAccountNonce(account: Account) {
+  const address = getAccountAddress(account);
+  await fetchAndCacheAccountNonce(address);
 }

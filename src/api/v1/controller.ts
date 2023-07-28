@@ -5,19 +5,23 @@ import {
   broadcastTransaction,
   SponsoredAuthorization,
   StacksTransaction,
-  getAddressFromPrivateKey,
   TxRejectedReason,
 } from '@stacks/transactions';
-import { bytesToHex, TransactionVersion } from '@stacks/common';
+import { bytesToHex } from '@stacks/common';
 import { StacksMainnet } from '@stacks/network';
 import envVariables from '../../../config/config';
 import { SponsorAccountsKey } from '../../constants';
-import { lockRandomSponsorAccount, getAccountNonce, incrementAccountNonce, unlockSponsorAccount } from '../../nonce';
+import {
+  lockRandomSponsorAccount,
+  getAccountNonce,
+  incrementAccountNonce,
+  unlockSponsorAccount,
+  refetchAccountNonce,
+} from '../../nonce';
 import { getAccountAddress } from '../../utils';
 import { validateTransaction } from '../../validation';
 import { Account } from '@stacks/wallet-sdk';
 import cache from '../../cache';
-import { setupAccountNonce } from '../../initialization';
 
 export class Controller {
   info: RequestHandler = async (_, res, next) => {
@@ -62,7 +66,7 @@ export class Controller {
       // attempt to lock a random sponsor account from wallet
       const account = await lockRandomSponsorAccount();
 
-      try {
+      const signAndBroadcast = async () => {
         const network = new StacksMainnet();
 
         // get the sponsor address nonce
@@ -85,22 +89,37 @@ export class Controller {
         }
 
         // broadcast transaction
-        let result = await broadcastTransaction(signedTx, network);
+        const result = await broadcastTransaction(signedTx, network);
+        return {
+          result,
+          nonce,
+          signedTx,
+        };
+      };
 
-        if (result?.reason === TxRejectedReason.BadNonce) {
-          req.logger.warn({ tx, nonce, result }, 'Bad nonce. Will update cached nonce and try again');
-          const address = getAddressFromPrivateKey(account.stxPrivateKey, TransactionVersion.Mainnet);
-          await setupAccountNonce(address);
-          result = await broadcastTransaction(signedTx, network);
+      try {
+        let { result, nonce, signedTx } = await signAndBroadcast();
+
+        // possible nonce out of sync errors
+        if (
+          result?.reason === TxRejectedReason.BadNonce ||
+          result?.reason === ('ConflictingNonceInMempool' as TxRejectedReason)
+        ) {
+          req.logger.warn({ tx, nonce, result }, `${result.reason}. Will refetch cached nonce and try again`);
+          await refetchAccountNonce(account);
+          ({ result, nonce, signedTx } = await signAndBroadcast());
         }
 
         // increment nonce or handle errors
         if ('error' in result) {
-          req.logger.warn({
-            tx,
-            nonce,
-            result,
-          }, 'failed to broadcast transaction');
+          req.logger.warn(
+            {
+              tx,
+              nonce,
+              result,
+            },
+            'failed to broadcast transaction',
+          );
           throw new Error(`Broadcast failed: ${result.error} ${result.reason}`);
         } else {
           incrementAccountNonce(account);
