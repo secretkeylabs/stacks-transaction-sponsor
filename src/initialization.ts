@@ -1,55 +1,9 @@
-import { StacksMainnet } from '@stacks/network';
 import { getAddressFromPrivateKey, TransactionVersion } from '@stacks/transactions';
 import envVariables from '../config/config';
-import axios from 'axios';
 import { generateWallet, generateNewAccount } from '@stacks/wallet-sdk';
-import { SponsorAccountsKey, AddressNoncePrefix } from './constants';
+import { SponsorAccountsKey } from './constants';
 import cache from './cache';
-
-export interface StxAddressDataResponse {
-  balance: string;
-  locked: string;
-  unlock_height: string;
-  nonce: number;
-}
-
-export async function getMempoolTransactions(stxAddress: string): Promise<number> {
-  const network = new StacksMainnet();
-  const apiUrl = `${network.coreApiUrl}/extended/v1/tx/mempool?address=${stxAddress}`;
-
-  return axios
-    .get(apiUrl, {
-      timeout: 30000,
-      params: {
-        limit: 0,
-        offset: 30,
-      },
-    })
-    .then((response) => {
-      return response.data.total;
-    });
-}
-
-export async function setupAccountNonce(address: string) {
-  const network = new StacksMainnet();
-
-  const apiUrl = `${network.coreApiUrl}/v2/accounts/${address}?proof=0`;
-
-  // get current nonce
-  const balanceInfo = await axios.get<StxAddressDataResponse>(apiUrl, {
-    timeout: 30000,
-  });
-  const nonce = balanceInfo.data.nonce;
-
-  // get pending transactions, increment nonce for each
-  const pendingTransactionCount = await getMempoolTransactions(address);
-
-  // calculate correct next nonce
-  const nextNonce = nonce + pendingTransactionCount;
-
-  // cache correct next nonce
-  cache.instance().set(AddressNoncePrefix + address, nextNonce);
-}
+import { fetchAndCacheAccountNonce } from './nonce';
 
 export async function initializeSponsorWallet() {
   const seed = envVariables.seed;
@@ -74,6 +28,6 @@ export async function initializeSponsorWallet() {
   // get the correct next nonce for each addresses
   wallet.accounts.forEach((account) => {
     const address = getAddressFromPrivateKey(account.stxPrivateKey, TransactionVersion.Mainnet);
-    setupAccountNonce(address);
+    fetchAndCacheAccountNonce(address);
   });
 }
