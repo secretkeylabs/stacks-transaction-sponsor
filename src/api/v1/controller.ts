@@ -73,7 +73,7 @@ export class Controller {
         const nonce = getAccountNonce(account);
 
         // sign transaction as sponsor
-        const signedTx = await sponsorTransaction({
+        let signedTx = await sponsorTransaction({
           transaction: tx,
           sponsorPrivateKey: account.stxPrivateKey,
           network,
@@ -85,7 +85,13 @@ export class Controller {
         const fee = auth.sponsorSpendingCondition.fee;
         const maxFee = BigInt(envVariables.maxFee);
         if (fee > maxFee) {
-          throw new Error(`Transaction fee (${fee}) exceeds max sponsor fee (${maxFee})`);
+          signedTx = await sponsorTransaction({
+            transaction: tx,
+            sponsorPrivateKey: account.stxPrivateKey,
+            network,
+            sponsorNonce: nonce,
+            fee: maxFee,
+          });
         }
 
         // broadcast transaction
